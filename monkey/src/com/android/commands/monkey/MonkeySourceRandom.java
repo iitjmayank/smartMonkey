@@ -33,13 +33,6 @@ import java.util.Random;
  * monkey event queue
  */
 public class MonkeySourceRandom implements MonkeyEventSource {
-
-    /** Zone */
-    private static int zone_width_low = 0;
-    private static int zone_width_high = 0;
-    private static int zone_height_low = 0;
-    private static int zone_height_high = 0;
-
     /** Key events that move around the UI. */
     private static final int[] NAV_KEYS = {
         KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN,
@@ -249,13 +242,6 @@ public class MonkeySourceRandom implements MonkeyEventSource {
     public void setFactors(int index, float v) {
         mFactors[index] = v;
     }
- 
-    public void setZone(int[] zone) {
-       zone_width_low = zone[0];
-       zone_width_high = zone[1];
-       zone_height_low = zone[2];
-       zone_height_high = zone[3]; 
-    }
 
     /**
      * Generates a random motion event. This method counts a down, move, and up as multiple events.
@@ -335,14 +321,7 @@ public class MonkeySourceRandom implements MonkeyEventSource {
     }
 
     private PointF randomPoint(Random random, Display display) {
-System.out.println("Display Height = " + zone_height_high);
-	if (zone_width_high == 0)
-		zone_width_high = display.getWidth();
-
-	if (zone_height_high == 0)
-		zone_height_high = display.getHeight();
-
-        return new PointF(random.nextInt(zone_width_high - zone_width_low) + zone_width_low, random.nextInt(zone_height_high - zone_height_low) + zone_height_low);
+        return new PointF(random.nextInt(display.getWidth()), random.nextInt(display.getHeight()));
     }
 
     private PointF randomVector(Random random) {

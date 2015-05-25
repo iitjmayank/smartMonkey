@@ -74,8 +74,6 @@ public class Monkey {
 
     private IPackageManager mPm;
 
-    private int[] zone = {0,0,0,0} ;
-
     /** Command line arguments */
     private String[] mArgs;
 
@@ -507,7 +505,7 @@ public class Monkey {
     public static void main(String[] args) {
         // Set the process name showing in "ps" or "top"
         Process.setArgV0("com.android.commands.monkey");
-	System.out.println("Debugging Logs: ");
+
         int resultCode = (new Monkey()).run(args);
         System.exit(resultCode);
     }
@@ -551,14 +549,12 @@ public class Monkey {
 
         // now set up additional data in preparation for launch
         if (mMainCategories.size() == 0) {
-		System.out.println("Debugging Logs: Categories size is zero");
             mMainCategories.add(Intent.CATEGORY_LAUNCHER);
             mMainCategories.add(Intent.CATEGORY_MONKEY);
         }
 
         if (mSeed == 0) {
             mSeed = System.currentTimeMillis() + System.identityHashCode(this);
-		System.out.println("Debugging Logs: Seed = " + mSeed);
         }
 
         if (mVerbose > 0) {
@@ -588,7 +584,6 @@ public class Monkey {
         }
 
         if (!getSystemInterfaces()) {
-	    System.out.println("Error: no system");
             return -3;
         }
 
@@ -633,14 +628,13 @@ public class Monkey {
             }
             mEventSource = new MonkeySourceRandom(mRandom, mMainApps, mThrottle, mRandomizeThrottle);
             mEventSource.setVerbose(mVerbose);
-System.out.println("Debug : after set verbose");
             // set any of the factors that has been set
             for (int i = 0; i < MonkeySourceRandom.FACTORZ_COUNT; i++) {
                 if (mFactors[i] <= 0.0f) {
                     ((MonkeySourceRandom) mEventSource).setFactors(i, mFactors[i]);
                 }
             }
-System.out.println("Debug : after set factos");
+
             // in random mode, we start with a random activity
             ((MonkeySourceRandom) mEventSource).generateActivity();
         }
@@ -649,8 +643,6 @@ System.out.println("Debug : after set factos");
         if (!mEventSource.validate()) {
             return -5;
         }
-	System.out.println("setting zone");
-	((MonkeySourceRandom) mEventSource).setZone(zone);
 
         // If we're profiling, do it immediately before/after the main monkey
         // loop
@@ -744,7 +736,7 @@ System.out.println("Debug : after set factos");
             return crashedAtCycle;
         } else {
             if (mVerbose > 0) {
-                System.out.println("// Monkey customised");
+                System.out.println("// Modified Monkey finished");
             }
             return 0;
         }
@@ -769,15 +761,6 @@ System.out.println("Debug : after set factos");
                     mSeed = nextOptionLong("Seed");
                 } else if (opt.equals("-p")) {
                     mValidPackages.add(nextOptionData());
-                } else if (opt.equals("-w")) {
-                    zone[0] = (int)nextOptionLong("width zone low value");
-                } else if (opt.equals("-W")) {
-                    zone[1] = (int)nextOptionLong("width zone high value");
-                } else if (opt.equals("-h")) {
-                    zone[2] = (int)nextOptionLong("height zone low value");
-                } else if (opt.equals("-H")) {
-                    zone[3] = (int)nextOptionLong("height zone high value");
-System.out.println("Zone high height = " + zone[3]);
                 } else if (opt.equals("-c")) {
                     mMainCategories.add(nextOptionData());
                 } else if (opt.equals("-v")) {
@@ -1359,7 +1342,6 @@ System.out.println("Zone high height = " + zone[3]);
         StringBuffer usage = new StringBuffer();
         usage.append("usage: monkey [-p ALLOWED_PACKAGE [-p ALLOWED_PACKAGE] ...]\n");
         usage.append("              [-c MAIN_CATEGORY [-c MAIN_CATEGORY] ...]\n");
-	usage.append("              [-w WidthLow, -W widthHigh, -h HeightLow, -H HeightHigh]\n");
         usage.append("              [--ignore-crashes] [--ignore-timeouts]\n");
         usage.append("              [--ignore-security-exceptions]\n");
         usage.append("              [--monitor-native-crashes] [--ignore-native-crashes]\n");

@@ -59,6 +59,9 @@ import java.util.Random;
  */
 public class Monkey {
 
+    private int mEventCount = 0;  //total number of events generated so far
+    public static MonkeyEventQueue mQ;
+
     /**
      * Monkey Debugging/Dev Support
      * <p>
@@ -626,6 +629,7 @@ public class Monkey {
             if (mVerbose >= 2) { // check seeding performance
                 System.out.println("// Seeded: " + mSeed);
             }
+	    mQ = new MonkeyEventQueue(mRandom, mThrottle, mRandomizeThrottle);
             mEventSource = new MonkeySourceRandom(mRandom, mMainApps, mThrottle, mRandomizeThrottle);
             mEventSource.setVerbose(mVerbose);
             // set any of the factors that has been set
@@ -1146,7 +1150,7 @@ public class Monkey {
                 System.out.println("    // Sending event #" + eventCounter);
             }
 
-            MonkeyEvent ev = mEventSource.getNextEvent();
+            MonkeyEvent ev = getEvent( (MonkeySourceRandom) mEventSource);
             if (ev != null) {
                 int injectCode = ev.injectEvent(mWm, mAm, mVerbose);
                 if (injectCode == MonkeyEvent.INJECT_FAIL) {
@@ -1366,5 +1370,19 @@ public class Monkey {
         usage.append("              [--periodic-bugreport]\n");
         usage.append("              COUNT\n");
         System.err.println(usage.toString());
+    }
+
+    /**
+     * if the queue is empty, we generate events first
+     * @return the first event in the queue
+     */
+    public MonkeyEvent getEvent(MonkeySourceRandom mEventSource) {
+        if (mQ.isEmpty()) {
+            mEventSource.generateEvents();
+        }
+        mEventCount++;
+        MonkeyEvent e = mQ.getFirst();
+        mQ.removeFirst();
+        return e;
     }
 }

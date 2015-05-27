@@ -99,7 +99,12 @@ public class MonkeySourceRandom implements MonkeyEventSource {
     private long mThrottle = 0;
 
     private boolean mKeyboardOpen = false;
-
+    
+    private int zoneDimes_x1 = 0;
+    private int zoneDimes_y1 = 0;
+    private int zoneDimes_x2 = 0;
+    private int zoneDimes_y2 = 0;
+    
     public static String getKeyName(int keycode) {
         return KeyEvent.keyCodeToString(keycode);
     }
@@ -114,7 +119,7 @@ public class MonkeySourceRandom implements MonkeyEventSource {
     public static int getKeyCode(String keyName) {
         return KeyEvent.keyCodeFromString(keyName);
     }
-
+    
     public MonkeySourceRandom(Random random, ArrayList<ComponentName> MainApps,
             long throttle, boolean randomizeThrottle) {
         // default values for random distributions
@@ -135,6 +140,34 @@ public class MonkeySourceRandom implements MonkeyEventSource {
 
         mRandom = random;
         mMainApps = MainApps;
+    }
+
+    public MonkeySourceRandom(int x1, int y1, int x2, int y2, Random random, ArrayList<ComponentName> MainApps,
+            long throttle, boolean randomizeThrottle) {
+        // default values for random distributions
+        // note, these are straight percentages, to match user input (cmd line args)
+        // but they will be converted to 0..1 values before the main loop runs.
+        mFactors[FACTOR_TOUCH] = 15.0f;
+        mFactors[FACTOR_MOTION] = 10.0f;
+        mFactors[FACTOR_TRACKBALL] = 15.0f;
+        // Adjust the values if we want to enable rotation by default.
+        mFactors[FACTOR_ROTATION] = 0.0f;
+        mFactors[FACTOR_NAV] = 25.0f;
+        mFactors[FACTOR_MAJORNAV] = 15.0f;
+        mFactors[FACTOR_SYSOPS] = 2.0f;
+        mFactors[FACTOR_APPSWITCH] = 2.0f;
+        mFactors[FACTOR_FLIP] = 1.0f;
+        mFactors[FACTOR_ANYTHING] = 13.0f;
+        mFactors[FACTOR_PINCHZOOM] = 2.0f;
+
+        mRandom = random;
+        mMainApps = MainApps;
+        
+        zoneDimes_x1 = x1;
+        zoneDimes_y1 = y1;
+        zoneDimes_x2 = x2;
+        zoneDimes_y2 = y2;
+                
     }
 
     /**
@@ -256,7 +289,11 @@ public class MonkeySourceRandom implements MonkeyEventSource {
      *
      */
     private void generatePointerEvent(Random random, int gesture) {
+        System.out.println("Generating pointer events");
         Display display = DisplayManagerGlobal.getInstance().getRealDisplay(Display.DEFAULT_DISPLAY);
+        
+        System.out.println("Display width : " + display.getWidth());
+        System.out.println("Display Height : "+ display.getHeight());
 
         PointF p1 = randomPoint(random, display);
         PointF v1 = randomVector(random);
@@ -389,10 +426,13 @@ public class MonkeySourceRandom implements MonkeyEventSource {
      * generate a random event based on mFactor
      */
     public void generateEvents() {
+        System.out.println("Generating Events");
         float cls = mRandom.nextFloat();
+        System.out.println("cls value  = " + cls + " and touch factor = " + mFactors[FACTOR_TOUCH]);
         int lastKey = 0;
 
         if (cls < mFactors[FACTOR_TOUCH]) {
+            System.out.println("Hitting touch");
             generatePointerEvent(mRandom, GESTURE_TAP);
             return;
         } else if (cls < mFactors[FACTOR_MOTION]) {
@@ -447,20 +487,29 @@ public class MonkeySourceRandom implements MonkeyEventSource {
 
     public boolean validate() {
         //check factors
+        System.out.println("Factors checked");
         return adjustEventFactors();
     }
 
     public void setVerbose(int verbose) {
+        System.out.println("Verbose set");
         mVerbose = verbose;
+    }
+    
+    public void setMainApps(ArrayList<ComponentName> MainApps) {
+        mMainApps = MainApps;
     }
 
     /**
      * generate an activity event
      */
     public void generateActivity() {
+        System.out.println("Size of mainApps Array : " + mMainApps.size());
         MonkeyActivityEvent e = new MonkeyActivityEvent(mMainApps.get(
                 mRandom.nextInt(mMainApps.size())));
+        System.out.println("Got the event");
         Monkey.mQ.addLast(e);
+        System.out.println("Activity added into the queue");
     }
 
     public MonkeyEvent getNextEvent() {

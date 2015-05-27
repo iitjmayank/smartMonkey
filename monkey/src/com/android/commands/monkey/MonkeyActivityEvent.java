@@ -32,6 +32,10 @@ public class MonkeyActivityEvent extends MonkeyEvent {
 
     public MonkeyActivityEvent(ComponentName app) {
         super(EVENT_TYPE_ACTIVITY);
+        System.out.println("kuch bhi");
+        if (app == null) {
+            System.out.println("Componenet name is null");
+        }
         mApp = app;
     }
 

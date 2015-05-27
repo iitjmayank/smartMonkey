@@ -79,6 +79,13 @@ public class Monkey {
 
     /** Command line arguments */
     private String[] mArgs;
+        
+    /** Zones object container*/
+    private ArrayList<MonkeySourceRandom> mZones = new ArrayList<MonkeySourceRandom>();
+    
+    private ArrayList<Integer> mZoneProb = new ArrayList<Integer>();
+    
+    private int mSumOfZoneProb = 0;
 
     /** Current argument being parsed */
     private int mNextArg;
@@ -248,9 +255,9 @@ public class Monkey {
 
     private HashSet<String> mTombstones = null;
 
-    float[] mFactors = new float[MonkeySourceRandom.FACTORZ_COUNT];
+    // float[] mFactors = new float[MonkeySourceRandom.FACTORZ_COUNT];
 
-    MonkeyEventSource mEventSource;
+    MonkeyEventSource mEventSource = null;
 
     private MonkeyNetworkMonitor mNetworkMonitor = new MonkeyNetworkMonitor();
 
@@ -535,16 +542,24 @@ public class Monkey {
 
         // prepare for command-line processing
         mArgs = args;
+        for (int i = 0; i< mArgs.length ;i++) 
+        {
+            System.out.println(mArgs[i]);
+        }
         mNextArg = 0;
 
         // set a positive value, indicating none of the factors is provided yet
-        for (int i = 0; i < MonkeySourceRandom.FACTORZ_COUNT; i++) {
-            mFactors[i] = 1.0f;
-        }
+      //  for (int i = 0; i < MonkeySourceRandom.FACTORZ_COUNT; i++) {
+      //      mFactors[i] = 1.0f;
+      //  }
+        
+        mRandom = new Random(mSeed);
 
         if (!processOptions()) {
             return -1;
         }
+        
+        System.out.println("Count : " + mCount);
 
         if (!loadPackageLists()) {
             return -1;
@@ -594,8 +609,6 @@ public class Monkey {
             return -4;
         }
 
-        mRandom = new Random(mSeed);
-
         if (mScriptFileNames != null && mScriptFileNames.size() == 1) {
             // script mode, ignore other options
             mEventSource = new MonkeySourceScript(mRandom, mScriptFileNames.get(0), mThrottle,
@@ -629,34 +642,55 @@ public class Monkey {
             if (mVerbose >= 2) { // check seeding performance
                 System.out.println("// Seeded: " + mSeed);
             }
-	    mQ = new MonkeyEventQueue(mRandom, mThrottle, mRandomizeThrottle);
-            mEventSource = new MonkeySourceRandom(mRandom, mMainApps, mThrottle, mRandomizeThrottle);
-            mEventSource.setVerbose(mVerbose);
+            mQ = new MonkeyEventQueue(mRandom, mThrottle, mRandomizeThrottle);
+            
+            adjustZoneProb();
+            // Set vebose level for each zoneObject
+            for (int i=0; i< mZones.size() ; i++) {
+                mZones.get(i).setVerbose(mVerbose);
+                mZones.get(i).validate();
+                mZones.get(i).setMainApps(mMainApps);
+            }
+            // mEventSource.setVerbose(mVerbose);
+            
+            /**
             // set any of the factors that has been set
             for (int i = 0; i < MonkeySourceRandom.FACTORZ_COUNT; i++) {
                 if (mFactors[i] <= 0.0f) {
                     ((MonkeySourceRandom) mEventSource).setFactors(i, mFactors[i]);
                 }
-            }
+            }*/
 
             // in random mode, we start with a random activity
-            ((MonkeySourceRandom) mEventSource).generateActivity();
+            if (mEventSource == null) {
+                System.out.println("Event Source is null");
+            }
+            // ((MonkeySourceRandom) mEventSource).generateActivity();
+            System.out.println("Size of mainApps Array : " + mMainApps.size());
+            MonkeyActivityEvent e = new MonkeyActivityEvent(mMainApps.get(
+                    mRandom.nextInt(mMainApps.size())));
+            System.out.println("Got the event");
+            Monkey.mQ.addLast(e);
+            System.out.println("Activity added into the queue");
         }
-
+        /*
         // validate source generator
         if (!mEventSource.validate()) {
             return -5;
         }
+        */
 
         // If we're profiling, do it immediately before/after the main monkey
         // loop
         if (mGenerateHprof) {
             signalPersistentProcesses();
         }
-
+        System.out.println("Before network start");
         mNetworkMonitor.start();
+        System.out.println("After network start");
         int crashedAtCycle = 0;
         try {
+            System.out.println("call Monkey Cycles");
             crashedAtCycle = runMonkeyCycles();
         } finally {
             // Release the rotation lock if it's still held and restore the
@@ -765,6 +799,8 @@ public class Monkey {
                     mSeed = nextOptionLong("Seed");
                 } else if (opt.equals("-p")) {
                     mValidPackages.add(nextOptionData());
+                } else if (opt.equals("-z")) {
+                    createZone();
                 } else if (opt.equals("-c")) {
                     mMainCategories.add(nextOptionData());
                 } else if (opt.equals("-v")) {
@@ -785,37 +821,48 @@ public class Monkey {
                     mGenerateHprof = true;
                 } else if (opt.equals("--pct-touch")) {
                     int i = MonkeySourceRandom.FACTOR_TOUCH;
-                    mFactors[i] = -nextOptionLong("touch events percentage");
+                    // mFactors[i] = -nextOptionLong("touch events percentage");
+                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("touch events percentage"));
                 } else if (opt.equals("--pct-motion")) {
                     int i = MonkeySourceRandom.FACTOR_MOTION;
-                    mFactors[i] = -nextOptionLong("motion events percentage");
+                    // mFactors[i] = -nextOptionLong("motion events percentage");
+                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("motion events percentage"));
                 } else if (opt.equals("--pct-trackball")) {
                     int i = MonkeySourceRandom.FACTOR_TRACKBALL;
-                    mFactors[i] = -nextOptionLong("trackball events percentage");
+                    // mFactors[i] = -nextOptionLong("trackball events percentage");
+                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("trackball events percentagee"));
                 } else if (opt.equals("--pct-rotation")) {
                     int i = MonkeySourceRandom.FACTOR_ROTATION;
-                    mFactors[i] = -nextOptionLong("screen rotation events percentage");
+                    // mFactors[i] = -nextOptionLong("screen rotation events percentage");
+                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("screen rotation events percentage"));                   
                 } else if (opt.equals("--pct-syskeys")) {
                     int i = MonkeySourceRandom.FACTOR_SYSOPS;
-                    mFactors[i] = -nextOptionLong("system (key) operations percentage");
+                    // mFactors[i] = -nextOptionLong("system (key) operations percentage");
+                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("system (key) operations percentage"));                    
                 } else if (opt.equals("--pct-nav")) {
                     int i = MonkeySourceRandom.FACTOR_NAV;
-                    mFactors[i] = -nextOptionLong("nav events percentage");
+                    // mFactors[i] = -nextOptionLong("nav events percentage");
+                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("nav events percentage"));                    
                 } else if (opt.equals("--pct-majornav")) {
                     int i = MonkeySourceRandom.FACTOR_MAJORNAV;
-                    mFactors[i] = -nextOptionLong("major nav events percentage");
+                   // mFactors[i] = -nextOptionLong("major nav events percentage");
+                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("major nav events percentage"));                                        
                 } else if (opt.equals("--pct-appswitch")) {
                     int i = MonkeySourceRandom.FACTOR_APPSWITCH;
-                    mFactors[i] = -nextOptionLong("app switch events percentage");
+                    // mFactors[i] = -nextOptionLong("app switch events percentage");
+                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("app switch events percentage"));                                                            
                 } else if (opt.equals("--pct-flip")) {
                     int i = MonkeySourceRandom.FACTOR_FLIP;
-                    mFactors[i] = -nextOptionLong("keyboard flip percentage");
+                   // mFactors[i] = -nextOptionLong("keyboard flip percentage");
+                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("keyboard flip percentage"));                                                                                
                 } else if (opt.equals("--pct-anyevent")) {
                     int i = MonkeySourceRandom.FACTOR_ANYTHING;
-                    mFactors[i] = -nextOptionLong("any events percentage");
+                   // mFactors[i] = -nextOptionLong("any events percentage");
+                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("any events percentage"));                                                                                                    
                 } else if (opt.equals("--pct-pinchzoom")) {
                     int i = MonkeySourceRandom.FACTOR_PINCHZOOM;
-                    mFactors[i] = -nextOptionLong("pinch zoom events percentage");
+                   // mFactors[i] = -nextOptionLong("pinch zoom events percentage");
+                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("pinch zoom events percentage"));                                                                                                                        
                 } else if (opt.equals("--pkg-blacklist-file")) {
                     mPkgBlacklistFile = nextOptionData();
                 } else if (opt.equals("--pkg-whitelist-file")) {
@@ -1054,6 +1101,7 @@ public class Monkey {
      *         errors detected.
      */
     private int runMonkeyCycles() {
+        System.out.println("runMonkeyCyscles function");
         int eventCounter = 0;
         int cycleCounter = 0;
 
@@ -1149,9 +1197,10 @@ public class Monkey {
                                    + systemUpTime + "]");
                 System.out.println("    // Sending event #" + eventCounter);
             }
-
-            MonkeyEvent ev = getEvent( (MonkeySourceRandom) mEventSource);
+            System.out.println("calling getEvent funtion");
+            MonkeyEvent ev = getEvent();
             if (ev != null) {
+                System.out.println("Event is not null");
                 int injectCode = ev.injectEvent(mWm, mAm, mVerbose);
                 if (injectCode == MonkeyEvent.INJECT_FAIL) {
                     if (ev instanceof MonkeyKeyEvent) {
@@ -1324,6 +1373,24 @@ public class Monkey {
         }
         return result;
     }
+    
+    /**
+     * Returns a int converted from the next data argument, with error handling
+     * if not available.
+     *
+     * @param opt The name of the option.
+     * @return Returns a int converted from the argument.
+     */
+    private int nextOptionInt(final String opt) {
+        int result;
+        try {
+            result = Integer.parseInt(nextOptionData());
+        } catch (NumberFormatException e) {
+            System.err.println("** Error: " + opt + " is not a number");
+            throw e;
+        }
+        return result;
+    }
 
     /**
      * Return the next argument on the command line.
@@ -1376,13 +1443,52 @@ public class Monkey {
      * if the queue is empty, we generate events first
      * @return the first event in the queue
      */
-    public MonkeyEvent getEvent(MonkeySourceRandom mEventSource) {
+    private MonkeyEvent getEvent() {
         if (mQ.isEmpty()) {
-            mEventSource.generateEvents();
+            System.out.println("Queue is empty");
+            setZone();
+            ((MonkeySourceRandom)mEventSource).generateEvents();
         }
+        System.out.println("Queue is not empty");
         mEventCount++;
         MonkeyEvent e = mQ.getFirst();
         mQ.removeFirst();
         return e;
+    }
+    
+    private void createZone() {
+        // TODO: User typo arguments handling
+        int x1 = nextOptionInt("x1 coordinate of zone");
+        int y1 = nextOptionInt("y1 coordinate of zone");
+        int x2 = nextOptionInt("x2 coordinate of zone");
+        int y2 = nextOptionInt("y2 coordinate of zone");
+        
+        int prob = nextOptionInt("probability of hitting the zone");
+        mZoneProb.add(prob);
+        
+        System.out.println("Zone dimensions : " + x1 + " " + y1 + " " + x2 + " " + y2 + " " + prob );
+        
+        mEventSource = new MonkeySourceRandom (x1, y1, x2, y2, mRandom, mMainApps, mThrottle, mRandomizeThrottle);
+        mZones.add((MonkeySourceRandom)mEventSource);
+    }
+    
+    private void adjustZoneProb() {
+        int numOfZones = mZoneProb.size();
+        for (int i = 0; i <  numOfZones; ++i) {
+            mSumOfZoneProb += mZoneProb.get(i);
+            mZoneProb.set(i, mSumOfZoneProb);
+        }
+        
+        System.out.println("Zone Probabilty sum : " + mSumOfZoneProb);
+    }
+    
+    private void setZone() {
+        int num = mRandom.nextInt(mSumOfZoneProb);
+        
+        for (int i = 0; i < mZoneProb.size(); ++i) {
+            if (num < mZoneProb.get(i)) {
+                mEventSource = mZones.get(i);
+            }
+        }
     }
 }

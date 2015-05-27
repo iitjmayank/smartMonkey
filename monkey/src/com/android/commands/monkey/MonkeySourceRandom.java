@@ -291,9 +291,14 @@ public class MonkeySourceRandom implements MonkeyEventSource {
     private void generatePointerEvent(Random random, int gesture) {
         System.out.println("Generating pointer events");
         Display display = DisplayManagerGlobal.getInstance().getRealDisplay(Display.DEFAULT_DISPLAY);
-        
+        System.out.println("Screen orientation : " + display.getOrientation());
         System.out.println("Display width : " + display.getWidth());
         System.out.println("Display Height : "+ display.getHeight());
+        
+        if (zoneDimes_y2 == 0) {
+            zoneDimes_y2 = display.getHeight();
+            zoneDimes_x2 = display.getWidth();
+        }
 
         PointF p1 = randomPoint(random, display);
         PointF v1 = randomVector(random);
@@ -355,7 +360,7 @@ public class MonkeySourceRandom implements MonkeyEventSource {
     }
 
     private PointF randomPoint(Random random, Display display) {
-        return new PointF(random.nextInt(display.getWidth()), random.nextInt(display.getHeight()));
+        return new PointF(random.nextInt(zoneDimes_x2 - zoneDimes_x1) + zoneDimes_x1, random.nextInt(zoneDimes_y2 - zoneDimes_y1) + zoneDimes_y1);
     }
 
     private PointF randomVector(Random random) {
@@ -364,9 +369,9 @@ public class MonkeySourceRandom implements MonkeyEventSource {
 
     private void randomWalk(Random random, Display display, PointF point, PointF vector) {
         point.x = (float) Math.max(Math.min(point.x + random.nextFloat() * vector.x,
-                display.getWidth()), 0);
+                zoneDimes_x2), zoneDimes_x1);
         point.y = (float) Math.max(Math.min(point.y + random.nextFloat() * vector.y,
-                display.getHeight()), 0);
+                zoneDimes_y2), zoneDimes_y1);
     }
 
     /**

@@ -1488,6 +1488,8 @@ public class Monkey {
         for (int i = 0; i < mZoneProb.size(); ++i) {
             if (num < mZoneProb.get(i)) {
                 mEventSource = mZones.get(i);
+                System.out.println("Selected zone : " + i);
+                break;
             }
         }
     }

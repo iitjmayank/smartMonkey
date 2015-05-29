@@ -105,6 +105,8 @@ public class MonkeySourceRandom implements MonkeyEventSource {
     private int zoneDimes_x2 = 0;
     private int zoneDimes_y2 = 0;
     
+    public int mZoneEventCount = 0;
+    
     public static String getKeyName(int keycode) {
         return KeyEvent.keyCodeToString(keycode);
     }
@@ -305,7 +307,7 @@ public class MonkeySourceRandom implements MonkeyEventSource {
 
         long downAt = SystemClock.uptimeMillis();
 
-        Monkey.mQ.addLast(new MonkeyTouchEvent(MotionEvent.ACTION_DOWN)
+        addEventToQueue(new MonkeyTouchEvent(MotionEvent.ACTION_DOWN)
                 .setDownTime(downAt)
                 .addPointer(0, p1.x, p1.y)
                 .setIntermediateNote(false));
@@ -316,7 +318,7 @@ public class MonkeySourceRandom implements MonkeyEventSource {
             for (int i = 0; i < count; i++) {
                 randomWalk(random, display, p1, v1);
 
-                Monkey.mQ.addLast(new MonkeyTouchEvent(MotionEvent.ACTION_MOVE)
+                addEventToQueue(new MonkeyTouchEvent(MotionEvent.ACTION_MOVE)
                         .setDownTime(downAt)
                         .addPointer(0, p1.x, p1.y)
                         .setIntermediateNote(true));
@@ -326,7 +328,7 @@ public class MonkeySourceRandom implements MonkeyEventSource {
             PointF v2 = randomVector(random);
 
             randomWalk(random, display, p1, v1);
-            Monkey.mQ.addLast(new MonkeyTouchEvent(MotionEvent.ACTION_POINTER_DOWN
+            addEventToQueue(new MonkeyTouchEvent(MotionEvent.ACTION_POINTER_DOWN
                             | (1 << MotionEvent.ACTION_POINTER_INDEX_SHIFT))
                     .setDownTime(downAt)
                     .addPointer(0, p1.x, p1.y).addPointer(1, p2.x, p2.y)
@@ -337,7 +339,7 @@ public class MonkeySourceRandom implements MonkeyEventSource {
                 randomWalk(random, display, p1, v1);
                 randomWalk(random, display, p2, v2);
 
-                Monkey.mQ.addLast(new MonkeyTouchEvent(MotionEvent.ACTION_MOVE)
+                addEventToQueue(new MonkeyTouchEvent(MotionEvent.ACTION_MOVE)
                         .setDownTime(downAt)
                         .addPointer(0, p1.x, p1.y).addPointer(1, p2.x, p2.y)
                         .setIntermediateNote(true));
@@ -345,7 +347,7 @@ public class MonkeySourceRandom implements MonkeyEventSource {
 
             randomWalk(random, display, p1, v1);
             randomWalk(random, display, p2, v2);
-            Monkey.mQ.addLast(new MonkeyTouchEvent(MotionEvent.ACTION_POINTER_UP
+            addEventToQueue(new MonkeyTouchEvent(MotionEvent.ACTION_POINTER_UP
                             | (1 << MotionEvent.ACTION_POINTER_INDEX_SHIFT))
                     .setDownTime(downAt)
                     .addPointer(0, p1.x, p1.y).addPointer(1, p2.x, p2.y)
@@ -353,7 +355,7 @@ public class MonkeySourceRandom implements MonkeyEventSource {
         }
 
         randomWalk(random, display, p1, v1);
-        Monkey.mQ.addLast(new MonkeyTouchEvent(MotionEvent.ACTION_UP)
+        addEventToQueue(new MonkeyTouchEvent(MotionEvent.ACTION_UP)
                 .setDownTime(downAt)
                 .addPointer(0, p1.x, p1.y)
                 .setIntermediateNote(false));
@@ -394,7 +396,7 @@ public class MonkeySourceRandom implements MonkeyEventSource {
             int dX = random.nextInt(10) - 5;
             int dY = random.nextInt(10) - 5;
 
-            Monkey.mQ.addLast(new MonkeyTrackballEvent(MotionEvent.ACTION_MOVE)
+            addEventToQueue(new MonkeyTrackballEvent(MotionEvent.ACTION_MOVE)
                     .addPointer(0, dX, dY)
                     .setIntermediateNote(i > 0));
         }
@@ -403,12 +405,12 @@ public class MonkeySourceRandom implements MonkeyEventSource {
         if (0 == random.nextInt(10)) {
             long downAt = SystemClock.uptimeMillis();
 
-            Monkey.mQ.addLast(new MonkeyTrackballEvent(MotionEvent.ACTION_DOWN)
+            addEventToQueue(new MonkeyTrackballEvent(MotionEvent.ACTION_DOWN)
                     .setDownTime(downAt)
                     .addPointer(0, 0, 0)
                     .setIntermediateNote(true));
 
-            Monkey.mQ.addLast(new MonkeyTrackballEvent(MotionEvent.ACTION_UP)
+            addEventToQueue(new MonkeyTrackballEvent(MotionEvent.ACTION_UP)
                     .setDownTime(downAt)
                     .addPointer(0, 0, 0)
                     .setIntermediateNote(false));
@@ -421,7 +423,7 @@ public class MonkeySourceRandom implements MonkeyEventSource {
      * @param random Random number source for rotation degree.
      */
     private void generateRotationEvent(Random random) {
-        Monkey.mQ.addLast(new MonkeyRotationEvent(
+        addEventToQueue(new MonkeyRotationEvent(
                 SCREEN_ROTATION_DEGREES[random.nextInt(
                         SCREEN_ROTATION_DEGREES.length)],
                 random.nextBoolean()));
@@ -465,12 +467,12 @@ public class MonkeySourceRandom implements MonkeyEventSource {
             } else if (cls < mFactors[FACTOR_APPSWITCH]) {
                 MonkeyActivityEvent e = new MonkeyActivityEvent(mMainApps.get(
                         mRandom.nextInt(mMainApps.size())));
-                Monkey.mQ.addLast(e);
+                addEventToQueue(e);
                 return;
             } else if (cls < mFactors[FACTOR_FLIP]) {
                 MonkeyFlipEvent e = new MonkeyFlipEvent(mKeyboardOpen);
                 mKeyboardOpen = !mKeyboardOpen;
-                Monkey.mQ.addLast(e);
+                addEventToQueue(e);
                 return;
             } else {
                 lastKey = 1 + mRandom.nextInt(KeyEvent.getMaxKeyCode() - 1);
@@ -484,10 +486,10 @@ public class MonkeySourceRandom implements MonkeyEventSource {
         }
 
         MonkeyKeyEvent e = new MonkeyKeyEvent(KeyEvent.ACTION_DOWN, lastKey);
-        Monkey.mQ.addLast(e);
+        addEventToQueue(e);
 
         e = new MonkeyKeyEvent(KeyEvent.ACTION_UP, lastKey);
-        Monkey.mQ.addLast(e);
+        addEventToQueue(e);
     }
 
     public boolean validate() {
@@ -513,7 +515,7 @@ public class MonkeySourceRandom implements MonkeyEventSource {
         MonkeyActivityEvent e = new MonkeyActivityEvent(mMainApps.get(
                 mRandom.nextInt(mMainApps.size())));
         System.out.println("Got the event");
-        Monkey.mQ.addLast(e);
+        addEventToQueue(e);
         System.out.println("Activity added into the queue");
     }
 
@@ -522,6 +524,10 @@ public class MonkeySourceRandom implements MonkeyEventSource {
         Monkey.mQ.removeFirst();
         return e;
     }
-
+    
+    private void addEventToQueue(MonkeyEvent e) {
+        Monkey.mQ.addLast(e);
+        ++mZoneEventCount;
+    }
 
 }

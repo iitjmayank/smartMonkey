@@ -23,6 +23,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.IPackageManager;
 import android.content.pm.ResolveInfo;
+import android.hardware.display.DisplayManagerGlobal;
 import android.os.Build;
 import android.os.Debug;
 import android.os.Environment;
@@ -33,6 +34,7 @@ import android.os.StrictMode;
 import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.os.UserHandle;
+import android.view.Display;
 import android.view.IWindowManager;
 import android.view.Surface;
 
@@ -648,7 +650,9 @@ public class Monkey {
             // Set vebose level for each zoneObject
             for (int i=0; i< mZones.size() ; i++) {
                 mZones.get(i).setVerbose(mVerbose);
-                mZones.get(i).validate();
+                if (!mZones.get(i).validate()) {
+                    return -5;
+                }
                 mZones.get(i).setMainApps(mMainApps);
             }
             // mEventSource.setVerbose(mVerbose);
@@ -662,16 +666,11 @@ public class Monkey {
             }*/
 
             // in random mode, we start with a random activity
-            if (mEventSource == null) {
-                System.out.println("Event Source is null");
-            }
+            
             // ((MonkeySourceRandom) mEventSource).generateActivity();
-            System.out.println("Size of mainApps Array : " + mMainApps.size());
             MonkeyActivityEvent e = new MonkeyActivityEvent(mMainApps.get(
                     mRandom.nextInt(mMainApps.size())));
-            System.out.println("Got the event");
-            Monkey.mQ.addLast(e);
-            System.out.println("Activity added into the queue");
+           mQ.addLast(e);
         }
         /*
         // validate source generator
@@ -800,7 +799,7 @@ public class Monkey {
                 } else if (opt.equals("-p")) {
                     mValidPackages.add(nextOptionData());
                 } else if (opt.equals("-z")) {
-                    createZone();
+                    createZone(nextOptionInt("x1 coordinate of zone"), nextOptionInt("y1 coordinate of zone"), nextOptionInt("x2 coordinate of zone") , nextOptionInt("y2 coordinate of zone"), nextOptionInt("probability of zone"));
                 } else if (opt.equals("-c")) {
                     mMainCategories.add(nextOptionData());
                 } else if (opt.equals("-v")) {
@@ -821,48 +820,37 @@ public class Monkey {
                     mGenerateHprof = true;
                 } else if (opt.equals("--pct-touch")) {
                     int i = MonkeySourceRandom.FACTOR_TOUCH;
-                    // mFactors[i] = -nextOptionLong("touch events percentage");
-                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("touch events percentage"));
+                    setFactor(i, "touch events percentage");
                 } else if (opt.equals("--pct-motion")) {
                     int i = MonkeySourceRandom.FACTOR_MOTION;
-                    // mFactors[i] = -nextOptionLong("motion events percentage");
-                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("motion events percentage"));
+                    setFactor(i, "motion events percentage");
                 } else if (opt.equals("--pct-trackball")) {
                     int i = MonkeySourceRandom.FACTOR_TRACKBALL;
-                    // mFactors[i] = -nextOptionLong("trackball events percentage");
-                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("trackball events percentagee"));
+                    setFactor(i, "trackball events percentage");
                 } else if (opt.equals("--pct-rotation")) {
                     int i = MonkeySourceRandom.FACTOR_ROTATION;
-                    // mFactors[i] = -nextOptionLong("screen rotation events percentage");
-                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("screen rotation events percentage"));                   
+                    setFactor(i, "screen rotation events percentage");                   
                 } else if (opt.equals("--pct-syskeys")) {
                     int i = MonkeySourceRandom.FACTOR_SYSOPS;
-                    // mFactors[i] = -nextOptionLong("system (key) operations percentage");
-                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("system (key) operations percentage"));                    
+                    setFactor(i, "system keys events percentage");                    
                 } else if (opt.equals("--pct-nav")) {
                     int i = MonkeySourceRandom.FACTOR_NAV;
-                    // mFactors[i] = -nextOptionLong("nav events percentage");
-                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("nav events percentage"));                    
+                    setFactor(i, "nav events percentage");                    
                 } else if (opt.equals("--pct-majornav")) {
                     int i = MonkeySourceRandom.FACTOR_MAJORNAV;
-                   // mFactors[i] = -nextOptionLong("major nav events percentage");
-                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("major nav events percentage"));                                        
+                    setFactor(i, "majore nav events percentage");                                        
                 } else if (opt.equals("--pct-appswitch")) {
                     int i = MonkeySourceRandom.FACTOR_APPSWITCH;
-                    // mFactors[i] = -nextOptionLong("app switch events percentage");
-                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("app switch events percentage"));                                                            
+                    setFactor(i, "App switch events percentage");                                                            
                 } else if (opt.equals("--pct-flip")) {
                     int i = MonkeySourceRandom.FACTOR_FLIP;
-                   // mFactors[i] = -nextOptionLong("keyboard flip percentage");
-                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("keyboard flip percentage"));                                                                                
+                    setFactor(i, "Keyboa flip events percentage");                                                                                
                 } else if (opt.equals("--pct-anyevent")) {
                     int i = MonkeySourceRandom.FACTOR_ANYTHING;
-                   // mFactors[i] = -nextOptionLong("any events percentage");
-                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("any events percentage"));                                                                                                    
+                    setFactor(i, "anything events percentage");                                                                                                    
                 } else if (opt.equals("--pct-pinchzoom")) {
                     int i = MonkeySourceRandom.FACTOR_PINCHZOOM;
-                   // mFactors[i] = -nextOptionLong("pinch zoom events percentage");
-                    ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong("pinch zoom events percentage"));                                                                                                                        
+                    setFactor(i, "pinch zoom events percentage");                                                                                                                        
                 } else if (opt.equals("--pkg-blacklist-file")) {
                     mPkgBlacklistFile = nextOptionData();
                 } else if (opt.equals("--pkg-whitelist-file")) {
@@ -923,6 +911,9 @@ public class Monkey {
 
             try {
                 mCount = Integer.parseInt(countStr);
+                if (mZones.size() == 0) {
+                    setDefaultZone();
+                }
             } catch (NumberFormatException e) {
                 System.err.println("** Error: Count is not a number");
                 showUsage();
@@ -1245,7 +1236,11 @@ public class Monkey {
                 }
             }
         }
-        System.out.println("Events injected: " + eventCounter);
+        System.out.println("Events injected zoneWise");
+        for (int i = 0; i< mZones.size(); ++i) {
+            System.out.println("Events in zone " + i + " = " + mZones.get(i).mZoneEventCount);
+        }
+        // System.out.println("Events injected: " + eventCounter);
         return eventCounter;
     }
 
@@ -1456,14 +1451,12 @@ public class Monkey {
         return e;
     }
     
-    private void createZone() {
-        // TODO: User typo arguments handling
-        int x1 = nextOptionInt("x1 coordinate of zone");
-        int y1 = nextOptionInt("y1 coordinate of zone");
-        int x2 = nextOptionInt("x2 coordinate of zone");
-        int y2 = nextOptionInt("y2 coordinate of zone");
+    private void createZone(int x1, int y1, int x2, int y2, int prob) {
+        // TODO :: check x1 < x2 and y1 < y2
+        if ( x2 > x1 || y2 > y1 || prob <= 0) {
+            System.err.println("** Error: zone dimensions are not a appropiate");
+        }
         
-        int prob = nextOptionInt("probability of hitting the zone");
         mZoneProb.add(prob);
         
         System.out.println("Zone dimensions : " + x1 + " " + y1 + " " + x2 + " " + y2 + " " + prob );
@@ -1493,4 +1486,16 @@ public class Monkey {
             }
         }
     }
+    
+    private void setFactor(int i, String message) {
+        if (mEventSource == null) {
+            setDefaultZone();
+        }
+        ((MonkeySourceRandom) mEventSource).setFactors(i, -nextOptionLong(message));
+    };
+    
+    private void setDefaultZone() {
+        Display display = DisplayManagerGlobal.getInstance().getRealDisplay(Display.DEFAULT_DISPLAY);
+        createZone(0, 0, display.getWidth(), display.getHeight(), 1);
+    };
 }

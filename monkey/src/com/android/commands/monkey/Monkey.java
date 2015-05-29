@@ -61,7 +61,6 @@ import java.util.Random;
  */
 public class Monkey {
 
-    private int mEventCount = 0;  //total number of events generated so far
     public static MonkeyEventQueue mQ;
 
     /**
@@ -544,10 +543,6 @@ public class Monkey {
 
         // prepare for command-line processing
         mArgs = args;
-        for (int i = 0; i< mArgs.length ;i++) 
-        {
-            System.out.println(mArgs[i]);
-        }
         mNextArg = 0;
 
         // set a positive value, indicating none of the factors is provided yet
@@ -670,7 +665,7 @@ public class Monkey {
             // ((MonkeySourceRandom) mEventSource).generateActivity();
             MonkeyActivityEvent e = new MonkeyActivityEvent(mMainApps.get(
                     mRandom.nextInt(mMainApps.size())));
-           mQ.addLast(e);
+            mQ.addLast(e);
         }
         /*
         // validate source generator
@@ -684,9 +679,7 @@ public class Monkey {
         if (mGenerateHprof) {
             signalPersistentProcesses();
         }
-        System.out.println("Before network start");
         mNetworkMonitor.start();
-        System.out.println("After network start");
         int crashedAtCycle = 0;
         try {
             System.out.println("call Monkey Cycles");
@@ -799,7 +792,7 @@ public class Monkey {
                 } else if (opt.equals("-p")) {
                     mValidPackages.add(nextOptionData());
                 } else if (opt.equals("-z")) {
-                    createZone(nextOptionInt("x1 coordinate of zone"), nextOptionInt("y1 coordinate of zone"), nextOptionInt("x2 coordinate of zone") , nextOptionInt("y2 coordinate of zone"), nextOptionInt("probability of zone"));
+                    createZone(nextOptionInt("x1(topleft) coordinate of zone(rectangle)"), nextOptionInt("y1(topleft) coordinate of zone(rectangle)"), nextOptionInt("x2(bottomright) coordinate of zone(rectangle)") , nextOptionInt("y2(bottomright) coordinate of zone(rectangle)"), nextOptionInt("probability of hitting the zone"));
                 } else if (opt.equals("-c")) {
                     mMainCategories.add(nextOptionData());
                 } else if (opt.equals("-v")) {
@@ -1408,6 +1401,7 @@ public class Monkey {
         StringBuffer usage = new StringBuffer();
         usage.append("usage: monkey [-p ALLOWED_PACKAGE [-p ALLOWED_PACKAGE] ...]\n");
         usage.append("              [-c MAIN_CATEGORY [-c MAIN_CATEGORY] ...]\n");
+        usage.append("              [-z x1(topleft) y1(topleft) x2(bottomright) y2(bottomright) probabililty --pct-touch ....][-z x1 y1 x2 y2 prob --pct-touch ....]\n");
         usage.append("              [--ignore-crashes] [--ignore-timeouts]\n");
         usage.append("              [--ignore-security-exceptions]\n");
         usage.append("              [--monitor-native-crashes] [--ignore-native-crashes]\n");
@@ -1445,7 +1439,6 @@ public class Monkey {
             ((MonkeySourceRandom)mEventSource).generateEvents();
         }
         System.out.println("Queue is not empty");
-        mEventCount++;
         MonkeyEvent e = mQ.getFirst();
         mQ.removeFirst();
         return e;
@@ -1453,7 +1446,7 @@ public class Monkey {
     
     private void createZone(int x1, int y1, int x2, int y2, int prob) {
         // TODO :: check x1 < x2 and y1 < y2
-        if ( x2 > x1 || y2 > y1 || prob <= 0) {
+        if ( x2 < x1 || y2 < y1 || prob <= 0) {
             System.err.println("** Error: zone dimensions are not a appropiate");
         }
         
@@ -1468,6 +1461,7 @@ public class Monkey {
     private void adjustZoneProb() {
         int numOfZones = mZoneProb.size();
         for (int i = 0; i <  numOfZones; ++i) {
+            System.out.println("Zone "+ i + "will hit with range (" + mSumOfZoneProb + " , " + mSumOfZoneProb + mZoneProb.get(i) + ")");
             mSumOfZoneProb += mZoneProb.get(i);
             mZoneProb.set(i, mSumOfZoneProb);
         }
@@ -1477,14 +1471,15 @@ public class Monkey {
     
     private void setZone() {
         int num = mRandom.nextInt(mSumOfZoneProb);
-        
+        System.out.println("Set Zone random variable = " + num);
         for (int i = 0; i < mZoneProb.size(); ++i) {
             if (num < mZoneProb.get(i)) {
                 mEventSource = mZones.get(i);
                 System.out.println("Selected zone : " + i);
-                break;
+                return;
             }
         }
+        System.err.println("**Error: Unable to set the Zone");
     }
     
     private void setFactor(int i, String message) {
@@ -1497,5 +1492,6 @@ public class Monkey {
     private void setDefaultZone() {
         Display display = DisplayManagerGlobal.getInstance().getRealDisplay(Display.DEFAULT_DISPLAY);
         createZone(0, 0, display.getWidth(), display.getHeight(), 1);
+        System.out.println("Default zone with device dimensions has created");
     };
 }

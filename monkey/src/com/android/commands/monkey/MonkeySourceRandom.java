@@ -100,9 +100,16 @@ public class MonkeySourceRandom implements MonkeyEventSource {
 
     private boolean mKeyboardOpen = false;
     
+    // Top left x1 coordinate of a rectangle zone
     private int zoneDimes_x1 = 0;
+    
+    // Top left y1 coordinate of a rectangle zone
     private int zoneDimes_y1 = 0;
+    
+    // Bottom right x2 coordinate of a rectangle zone
     private int zoneDimes_x2 = 0;
+    
+    // Bottom right y2 coordinate of a rectangle zone
     private int zoneDimes_y2 = 0;
     
     public int mZoneEventCount = 0;
@@ -291,17 +298,9 @@ public class MonkeySourceRandom implements MonkeyEventSource {
      *
      */
     private void generatePointerEvent(Random random, int gesture) {
-        System.out.println("Generating pointer events");
+        // System.out.println("Generating pointer events");
         Display display = DisplayManagerGlobal.getInstance().getRealDisplay(Display.DEFAULT_DISPLAY);
-        System.out.println("Screen orientation : " + display.getOrientation());
-        System.out.println("Display width : " + display.getWidth());
-        System.out.println("Display Height : "+ display.getHeight());
         
-        if (zoneDimes_y2 == 0) {
-            zoneDimes_y2 = display.getHeight();
-            zoneDimes_x2 = display.getWidth();
-        }
-
         PointF p1 = randomPoint(random, display);
         PointF v1 = randomVector(random);
 

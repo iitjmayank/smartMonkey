@@ -33,6 +33,11 @@ import java.util.Random;
  * monkey event queue
  */
 public class MonkeySourceRandom implements MonkeyEventSource {
+    
+    /** Zones that needs to avoid */
+   // private Integer[] blackZone = new Integer[4];
+    private ArrayList<Integer[]> mBlackZones = new ArrayList<Integer[]>();
+    
     /** Key events that move around the UI. */
     private static final int[] NAV_KEYS = {
         KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN,

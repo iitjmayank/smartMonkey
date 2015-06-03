@@ -793,6 +793,9 @@ public class Monkey {
                     mValidPackages.add(nextOptionData());
                 } else if (opt.equals("-z")) {
                     createZone(nextOptionInt("x1(topleft) coordinate of zone(rectangle)"), nextOptionInt("y1(topleft) coordinate of zone(rectangle)"), nextOptionInt("x2(bottomright) coordinate of zone(rectangle)") , nextOptionInt("y2(bottomright) coordinate of zone(rectangle)"), nextOptionInt("probability of hitting the zone"));
+                } else if (opt.equals("-b")) {
+                    // set the blacklist zone
+                    ((MonkeySourceRandom)mEventSource).setIgnoreArea(nextOptionInt("x1(topleft) coordinate of zone(rectangle)"), nextOptionInt("y1(topleft) coordinate of zone(rectangle)"), nextOptionInt("x2(bottomright) coordinate of zone(rectangle)") , nextOptionInt("y2(bottomright) coordinate of zone(rectangle)"));
                 } else if (opt.equals("-c")) {
                     mMainCategories.add(nextOptionData());
                 } else if (opt.equals("-v")) {

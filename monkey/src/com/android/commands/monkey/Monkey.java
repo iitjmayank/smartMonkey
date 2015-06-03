@@ -217,7 +217,7 @@ public class Monkey {
     long mSeed = 0;
 
     /** The random number generator **/
-    Random mRandom = null;
+    Random mRandom;
 
     /** Dropped-event statistics **/
     long mDroppedKeyEvents = 0;
@@ -550,6 +550,10 @@ public class Monkey {
       //      mFactors[i] = 1.0f;
       //  }
         
+        if (mSeed == 0) {
+            mSeed = System.currentTimeMillis() + System.identityHashCode(this);
+        }
+        
         mRandom = new Random(mSeed);
 
         if (!processOptions()) {
@@ -566,10 +570,6 @@ public class Monkey {
         if (mMainCategories.size() == 0) {
             mMainCategories.add(Intent.CATEGORY_LAUNCHER);
             mMainCategories.add(Intent.CATEGORY_MONKEY);
-        }
-
-        if (mSeed == 0) {
-            mSeed = System.currentTimeMillis() + System.identityHashCode(this);
         }
 
         if (mVerbose > 0) {

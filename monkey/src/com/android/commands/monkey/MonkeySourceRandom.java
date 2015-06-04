@@ -36,7 +36,7 @@ public class MonkeySourceRandom implements MonkeyEventSource {
     
     /** Zones that needs to avoid */
    // private Integer[] blackZone = new Integer[4];
-    private ArrayList<Integer[]> mBlackZones = new ArrayList<Integer[]>();
+    private ArrayList<int[]> mBlackZones = new ArrayList<int[]>();
     
     /** Key events that move around the UI. */
     private static final int[] NAV_KEYS = {
@@ -366,8 +366,24 @@ public class MonkeySourceRandom implements MonkeyEventSource {
     }
 
     private PointF randomPoint(Random random, Display display) {
-        return new PointF(random.nextInt(zoneDimes_x2 - zoneDimes_x1) + zoneDimes_x1, random.nextInt(zoneDimes_y2 - zoneDimes_y1) + zoneDimes_y1);
+        float x = random.nextInt(zoneDimes_x2 - zoneDimes_x1) + zoneDimes_x1;
+        float y = random.nextInt(zoneDimes_y2 - zoneDimes_y1) + zoneDimes_y1;
+        if (mBlackZones.size() > 0) {
+            for (int i = 0; i<mBlackZones.size(); i++ ) {
+               if ( x >= mBlackZones.get(i)[0] && x <= mBlackZones.get(i)[2] &
+                    return randomPoint(random, display);
+                }
+            }
+        }
+        return new PointF(x, y);
+
     }
+
+    public void setIgnoreArea(int x1, int y1, int x2, int y2) {
+        int[] data = new int[]{x1, y1, x2, y2};
+        mBlackZones.add(data);
+    }
+
 
     private PointF randomVector(Random random) {
         return new PointF((random.nextFloat() - 0.5f) * 50, (random.nextFloat() - 0.5f) * 50);

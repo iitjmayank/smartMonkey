@@ -370,7 +370,7 @@ public class MonkeySourceRandom implements MonkeyEventSource {
         float y = random.nextInt(zoneDimes_y2 - zoneDimes_y1) + zoneDimes_y1;
         if (mBlackZones.size() > 0) {
             for (int i = 0; i<mBlackZones.size(); i++ ) {
-               if ( x >= mBlackZones.get(i)[0] && x <= mBlackZones.get(i)[2] && y <= mBlackZones.get(i)[1] && y <= mBlackZones.get(i)[3]) {
+               if ( x >= mBlackZones.get(i)[0] && x <= mBlackZones.get(i)[2] && y >= mBlackZones.get(i)[1] && y <= mBlackZones.get(i)[3]) {
                     return randomPoint(random, display);
                 }
             }

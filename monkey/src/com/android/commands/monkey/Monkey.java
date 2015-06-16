@@ -274,6 +274,7 @@ public class Monkey {
      * @return Returns true if we should run against pkg.
      */
     private boolean checkEnteringPackage(String pkg) {
+        System.out.println("Checking the pkg: " + pkg);
         if (mInvalidPackages.size() > 0) {
             if (mInvalidPackages.contains(pkg)) {
                 return false;
@@ -823,7 +824,10 @@ public class Monkey {
                 } else if (opt.equals("--pct-trackball")) {
                     int i = MonkeySourceRandom.FACTOR_TRACKBALL;
                     setFactor(i, "trackball events percentage");
-                } else if (opt.equals("--pct-rotation")) {
+                } else if (opt.equals("--pct-backbutton")) {
+                    int i = MonkeySourceRandom.FACTOR_BACKBUTTON;
+                    setFactor(i, "back button events percentage");
+                }  else if (opt.equals("--pct-rotation")) {
                     int i = MonkeySourceRandom.FACTOR_ROTATION;
                     setFactor(i, "screen rotation events percentage");                   
                 } else if (opt.equals("--pct-syskeys")) {
@@ -1411,7 +1415,7 @@ public class Monkey {
         usage.append("              [--kill-process-after-error] [--hprof]\n");
         usage.append("              [--pct-touch PERCENT] [--pct-motion PERCENT]\n");
         usage.append("              [--pct-trackball PERCENT] [--pct-syskeys PERCENT]\n");
-        usage.append("              [--pct-nav PERCENT] [--pct-majornav PERCENT]\n");
+        usage.append("              [--pct-nav PERCENT] [--pct-majornav PERCENT] [--pct-backbutton PERCENT]\n");
         usage.append("              [--pct-appswitch PERCENT] [--pct-flip PERCENT]\n");
         usage.append("              [--pct-anyevent PERCENT] [--pct-pinchzoom PERCENT]\n");
         usage.append("              [--pkg-blacklist-file PACKAGE_BLACKLIST_FILE]\n");

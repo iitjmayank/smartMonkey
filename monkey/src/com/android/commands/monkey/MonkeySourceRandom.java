@@ -88,7 +88,8 @@ public class MonkeySourceRandom implements MonkeyEventSource {
     public static final int FACTOR_APPSWITCH    = 8;
     public static final int FACTOR_FLIP         = 9;
     public static final int FACTOR_ANYTHING     = 10;
-    public static final int FACTORZ_COUNT       = 11;    // should be last+1
+    public static final int FACTOR_BACKBUTTON   = 11;
+    public static final int FACTORZ_COUNT       = 12;    // should be last+1
 
     private static final int GESTURE_TAP = 0;
     private static final int GESTURE_DRAG = 1;
@@ -173,6 +174,7 @@ public class MonkeySourceRandom implements MonkeyEventSource {
         mFactors[FACTOR_FLIP] = 1.0f;
         mFactors[FACTOR_ANYTHING] = 13.0f;
         mFactors[FACTOR_PINCHZOOM] = 2.0f;
+        mFactors[FACTOR_BACKBUTTON] = 0.0f;
 
         mRandom = random;
         mMainApps = MainApps;
@@ -483,6 +485,8 @@ public class MonkeySourceRandom implements MonkeyEventSource {
                 lastKey = MAJOR_NAV_KEYS[mRandom.nextInt(MAJOR_NAV_KEYS.length)];
             } else if (cls < mFactors[FACTOR_SYSOPS]) {
                 lastKey = SYS_KEYS[mRandom.nextInt(SYS_KEYS.length)];
+            } else if (cls < mFactors[FACTOR_BACKBUTTON]) {
+                lastKey = SYS_KEYS[1];
             } else if (cls < mFactors[FACTOR_APPSWITCH]) {
                 MonkeyActivityEvent e = new MonkeyActivityEvent(mMainApps.get(
                         mRandom.nextInt(mMainApps.size())));
@@ -502,8 +506,14 @@ public class MonkeySourceRandom implements MonkeyEventSource {
                     && PHYSICAL_KEY_EXISTS[lastKey]) {
                 break;
             }
+            
+            if (lastKey == KeyEvent.KEYCODE_BACK) {
+                break;
+            }
+            //System.out.println("Lost in for loop");
+          //  System.out.println("LastKey event : " + lastKey);
         }
-
+        //System.out.println("LastKey event : " + lastKey);
         MonkeyKeyEvent e = new MonkeyKeyEvent(KeyEvent.ACTION_DOWN, lastKey);
         addEventToQueue(e);
 
